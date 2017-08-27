@@ -11,7 +11,7 @@ library(data.table)
 library(dplyr)
 library(gbm)
 
-all_data = clean[1:5000]
+all_data = clean
 all_data$logerror_q3 = NULL
 
 

@@ -68,7 +68,7 @@ gridSearch <- trainControl(method = "cv",
 rf.grid <-  expand.grid(mtry = c(4, 6, 8, 10, 12, 14, 16, 20, 24, 30))
 
 NODESIZE = 100
-NTREE = 100
+NTREE = 300
 
 rf.fit <- train(logerror ~ .,
                data = train_data, 
