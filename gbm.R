@@ -6,12 +6,12 @@
 # load(file="clean_prop.dat")
 # load(file="imp_prop.dat")
 
-brary(caret)
+library(caret)
 library(data.table)
-library(dplyr)
 library(gbm)
 
-all_data = clean
+
+all_data = cbind(clean, imp[,-1])
 all_data$logerror_q3 = NULL
 
 
@@ -24,12 +24,12 @@ for (log_col in log_cols) {
 col_names = colnames(all_data)
 rm_names = c("id_parcel", "fips_blockid", "date", "censustractandblock", "region_zip",
              "zoning_landuse_county", "region_city", "zoning_property", "region_neighbor",
-             "month_factor", "num_unit_fac_1_30",
+             "month_factor", "num_unit_fac_1_30", "num_bathroom_isna", "num_bedroom_isna",
              "tax_building", "tax_land", "tax_property", "tax_total",
-             "missing_values_pattern",
+             "missing_values_pattern", "num_pool_1_new", "region_county_isna",
              "num_bathroom_fac", "num_bedroom_fac", "num_room_fac", "num_75_bath_fac", "num_bath_fac", 
              "num_bathroom", "num_bath",
-             "num_garage_fac")
+             "num_garage_fac", "censustractandblock_isna")
 rm_names = c(rm_names, col_names[grep("region_zip_fac.*", col_names)])
 rm_names = c(rm_names, col_names[grep("region_city_fac.*", col_names)])
 rm_names = c(rm_names, col_names[grep("region_neighbor_fac.*", col_names)])
@@ -81,7 +81,7 @@ gbm.grid <-  expand.grid(
                           interaction.depth = c(8, 12, 15)
                         )
 
-gbm.fit = train(logerror ~ .,
+fit.gbm = train(logerror ~ .,
              data = train_data, 
              method = "gbm", 
              metric = "MAE",
@@ -92,12 +92,12 @@ gbm.fit = train(logerror ~ .,
              verbose = TRUE
             )
 
-gbm.fit
+fit.gbm
 
-best_n.trees = gbm.fit$bestTune$n.trees
-best_interaction.depth = gbm.fit$bestTune$interaction.depth
-best_shrinkage = gbm.fit$bestTune$shrinkage
-best_minobsinnode = gbm.fit$bestTune$n.minobsinnode
+best_n.trees = fit.gbm$bestTune$n.trees
+best_interaction.depth = fit.gbm$bestTune$interaction.depth
+best_shrinkage = fit.gbm$bestTune$shrinkage
+best_minobsinnode = fit.gbm$bestTune$n.minobsinnode
 
 ## parameters
 # plot(gbmFit2)
@@ -105,10 +105,10 @@ rf.imp = varImp(rf.fit, scale = FALSE)
 plot(rf.imp, top = 40)
 
 #mse-plot of finalModel
-plot((1:length(gbm.fit$finalModel$mse)), gbm.fit$finalModel$mse)
+plot((1:length(fit.gbm$finalModel$mse)), fit.gbm$finalModel$mse)
 
 
-gbm.pred = predict(gbm.fit, test_data)
+gbm.pred = predict(fit.gbm, test_data)
 
 err = test_data$logerror - gbm.pred
 cat("mean abs err: ", mean(abs(err)), "\n")
@@ -128,8 +128,6 @@ bestGbmFit = gbm(logerror ~ .,
                  shrinkage = best_shrinkage,
                  interaction.depth = best_interaction.depth, 
                  n.minobsinnode = best_minobsinnode,
-                 n.cores = 7,
-                 keep.data = T,
                  verbose=T)
 
 
@@ -158,5 +156,5 @@ predictions[["201711"]] = 0
 predictions[["201712"]] = 0
 
 
-write.csv(x = predictions, file = "submission_gbm-V4.csv", 
+write.csv(x = predictions, file = "submission_gbm-V4_final.csv", 
           quote = FALSE, row.names = FALSE)
