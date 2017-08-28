@@ -101,8 +101,8 @@ best_minobsinnode = fit.gbm$bestTune$n.minobsinnode
 
 ## parameters
 # plot(gbmFit2)
-rf.imp = varImp(rf.fit, scale = FALSE)
-plot(rf.imp, top = 40)
+gbm.imp = varImp(fit.gbm, scale = FALSE)
+plot(gbm.imp, top = 40)
 
 #mse-plot of finalModel
 plot((1:length(fit.gbm$finalModel$mse)), fit.gbm$finalModel$mse)
@@ -134,7 +134,7 @@ bestGbmFit = gbm(logerror ~ .,
 ############################################
 # make submission
 
-newdata = clean_prop
+newdata = cbind(clean_prop, imp_prop[,-1])
 newdata$logerror_q3 = NULL
 
 newdata$parcelid = newdata$id_parcel
